@@ -26,10 +26,12 @@ public class NetSdrClientTests
             _tcpMock.Setup(tcp => tcp.Connected).Returns(false);
         });
 
-        _tcpMock.Setup(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>())).Callback<byte[]>((bytes) =>
-        {
-            _tcpMock.Raise(tcp => tcp.MessageReceived += null, _tcpMock.Object, bytes);
-        });
+        _tcpMock.Setup(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()))
+            .Callback<byte[]>((bytes) =>
+            {
+                // емулюємо відповідь від TCP, щоб завершився TaskCompletionSource
+                _tcpMock.Raise(tcp => tcp.MessageReceived += null, _tcpMock.Object, bytes);
+            });
 
         _updMock = new Mock<IUdpClient>();
 
@@ -116,4 +118,57 @@ public class NetSdrClientTests
     }
 
     //TODO: cover the rest of the NetSdrClient code here
+
+    [Test]
+    public async Task ConnectAsync_WhenAlreadyConnected_DoesNothing()
+    {
+        // Arrange: емуляція вже активного з'єднання
+        _tcpMock.Setup(tcp => tcp.Connected).Returns(true);
+
+        // Act
+        await _client.ConnectAsync();
+
+        // Assert: не має бути повторного Connect та відправки pre-setup повідомлень
+        _tcpMock.Verify(tcp => tcp.Connect(), Times.Never);
+        _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Never);
+    }
+
+    [Test]
+    public async Task StopIQ_NoConnection_DoesNotSendOrStopUdp()
+    {
+        // Act
+        await _client.StopIQAsync();
+
+        // Assert
+        _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Never);
+        _updMock.Verify(udp => udp.StopListening(), Times.Never);
+        Assert.That(_client.IQStarted, Is.False);
+    }
+
+    [Test]
+    public async Task ChangeFrequencyAsync_NoConnection_DoesNotSend()
+    {
+        // Act
+        await _client.ChangeFrequencyAsync(144800000L, 0);
+
+        // Assert: при відсутності TCP-з'єднання внутрішній SendTcpRequest
+        // має повернути null і не викликати SendMessageAsync
+        _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Never);
+        _tcpMock.VerifyGet(tcp => tcp.Connected, Times.AtLeastOnce);
+    }
+
+    [Test]
+    public async Task ChangeFrequencyAsync_WithConnection_SendsMessage()
+    {
+        // Arrange: встановлюємо з'єднання (3 повідомлення pre-setup)
+        await _client.ConnectAsync();
+
+        // Act: міняємо частоту
+        await _client.ChangeFrequencyAsync(144800000L, 1);
+
+        // Assert:
+        // 3 повідомлення при ConnectAsync + 1 при ChangeFrequencyAsync = 4
+        _tcpMock.Verify(tcp => tcp.Connect(), Times.Once);
+        _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Exactly(4));
+    }
 }
