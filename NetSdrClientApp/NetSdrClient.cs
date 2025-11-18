@@ -14,8 +14,8 @@ namespace NetSdrClientApp
 {
     public class NetSdrClient
     {
-        private ITcpClient _tcpClient;
-        private IUdpClient _udpClient;
+        private readonly ITcpClient _tcpClient;
+        private readonly IUdpClient _udpClient;
 
         public bool IQStarted { get; set; }
 
@@ -133,7 +133,7 @@ namespace NetSdrClientApp
 
         private TaskCompletionSource<byte[]>? _responseTaskSource;
 
-        private async Task<byte[]> SendTcpRequest(byte[] msg)
+        private async Task<byte[]?> SendTcpRequest(byte[] msg)
         {
             if (!_tcpClient.Connected)
             {
@@ -142,7 +142,7 @@ namespace NetSdrClientApp
             }
 
             _responseTaskSource = new TaskCompletionSource<byte[]>(TaskCreationOptions.RunContinuationsAsynchronously);
-            var responseTask = _responseTaskSource.Task;
+            Task<byte[]> responseTask = _responseTaskSource.Task;
 
             await _tcpClient.SendMessageAsync(msg);
 
