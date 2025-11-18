@@ -108,22 +108,31 @@ namespace NetSdrClientApp.Messages
 
         public static IEnumerable<int> GetSamples(ushort sampleSize, byte[] body)
         {
-            sampleSize /= 8; //to bytes
-            if (sampleSize  > 4)
+            int bytesCount = sampleSize / 8;
+
+            if (bytesCount > 4)
             {
-                throw new ArgumentOutOfRangeException();
+                throw new ArgumentOutOfRangeException(nameof(sampleSize));
+            }
+            if (body == null)
+            {
+                throw new ArgumentNullException(nameof(body));
             }
 
-            var bodyEnumerable = body as IEnumerable<byte>;
-            var prefixBytes = Enumerable.Range(0, 4 - sampleSize)
-                                      .Select(b => (byte)0);
+            return GetSamplesIterator(bytesCount, body);
+        }
+
+        private static IEnumerable<int> GetSamplesIterator(int sampleSize, IEnumerable<byte> bodyEnumerable)
+        {
+            var prefixBytes = Enumerable.Repeat((byte)0, 4 - sampleSize);
 
             while (bodyEnumerable.Count() >= sampleSize)
             {
                 yield return BitConverter.ToInt32(bodyEnumerable
                     .Take(sampleSize)
                     .Concat(prefixBytes)
-                    .ToArray());
+                    .ToArray(), 0);
+
                 bodyEnumerable = bodyEnumerable.Skip(sampleSize);
             }
         }
