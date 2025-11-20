@@ -171,4 +171,80 @@ public class NetSdrClientTests
         _tcpMock.Verify(tcp => tcp.Connect(), Times.Once);
         _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Exactly(4));
     }
+    [Test]
+    public async Task Disconnect_WhenIqStarted_OnlyDisconnectsTcp()
+    {
+        // Arrange
+        await _client.ConnectAsync();
+        await _client.StartIQAsync();
+
+        _updMock.Invocations.Clear();
+        _tcpMock.Invocations.Clear();
+
+        // Act
+        _client.Disconect();
+
+        // Assert
+        _tcpMock.Verify(tcp => tcp.Disconnect(), Times.Once,
+            "Disconnect має викликати підʼєднаного TCP-клієнта.");
+        _updMock.Verify(udp => udp.StopListening(), Times.Never,
+            "Disconnect не торкається UDP-лісенера в поточній реалізації.");
+        
+    }
+
+
+    [Test]
+    public async Task StartIQ_AfterStopIQ_CanBeStartedAgain()
+    {
+        // Arrange
+        await _client.ConnectAsync();
+        await _client.StartIQAsync();
+        await _client.StopIQAsync();
+
+        _updMock.Invocations.Clear(); // щоб рахувати виклики тільки після StopIQ
+
+        // Act
+        await _client.StartIQAsync();
+
+        // Assert
+        _updMock.Verify(udp => udp.StartListeningAsync(), Times.Once,
+            "IQ should be able to start again after StopIQAsync.");
+        Assert.That(_client.IQStarted, Is.True);
+    }
+
+    [Test]
+    public async Task ConnectAsync_Twice_DoesNotReconnectOrResendPreSetup()
+    {
+        // Arrange
+        await _client.ConnectAsync();
+
+        // Act
+        await _client.ConnectAsync();
+
+
+        _tcpMock.Verify(tcp => tcp.Connect(), Times.Once,
+            "Connect should be performed only once.");
+        _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Exactly(3),
+            "Pre-setup messages should be sent only once.");
+    }
+
+    [Test]
+    public async Task StartIQ_WhenAlreadyStarted_RestartsUdpListener()
+    {
+        // Arrange
+        await _client.ConnectAsync();
+        await _client.StartIQAsync();
+        Assert.That(_client.IQStarted, Is.True);
+
+        _updMock.Invocations.Clear(); 
+
+        // Act
+        await _client.StartIQAsync(); 
+
+        // Assert
+        _updMock.Verify(udp => udp.StartListeningAsync(), Times.Once,
+            "StartIQAsync викликає UDP-лісенер при повторному старті.");
+        Assert.That(_client.IQStarted, Is.True);
+    }
+
 }
