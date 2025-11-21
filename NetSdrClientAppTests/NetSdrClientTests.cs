@@ -16,6 +16,7 @@ public class NetSdrClientTests
     
     private const int TestPort = 12345;
     UdpClientWrapper _udpClientWrapper;
+    TcpClientWrapper _tcpClientWrapper;
 
     public NetSdrClientTests() { }
 
@@ -45,6 +46,7 @@ public class NetSdrClientTests
         _client = new NetSdrClient(_tcpMock.Object, _updMock.Object);
         
         _udpClientWrapper = new UdpClientWrapper(TestPort);
+        _tcpClientWrapper = new TcpClientWrapper("localhost", TestPort);
     }
 
     [Test]
@@ -301,6 +303,8 @@ public class NetSdrClientTests
             Assert.IsTrue(messageReceivedCalled);
             _udpClientWrapper.StopListening();
         }
+    
+
         
 
         [Test]
