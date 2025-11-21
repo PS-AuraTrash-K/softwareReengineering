@@ -61,15 +61,8 @@ public class NetSdrClientTests
     [Test]
     public void TryAsyncWithoutServer()
     {
-        try
-        {
-            _tcpClientWrapper.SendMessageAsync("1");
-        }
-        catch (Exception e)
-        {
-            Assert.Pass("No server found");
-        }
-        Assert.That(_tcpClientWrapper.Connected, Is.True);
+        _ = _tcpClientWrapper.SendMessageAsync("1");
+        Assert.That(_tcpClientWrapper.Connected, Is.False);
     }
 
     [Test]
