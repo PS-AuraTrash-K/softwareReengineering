@@ -66,9 +66,24 @@ public class UdpClientWrapper : IUdpClient, IDisposable // <-- Implement IDispos
 
     public void Dispose()
     {
-        StopListening(); 
-        _cts?.Dispose();
+        Dispose(true);
         GC.SuppressFinalize(this);
+    }
+    
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposing) return;
+    
+        try
+        {
+            StopListening();
+            _udpClient?.Dispose();
+            _cts?.Dispose();
+        }
+        catch
+        {
+            // Swallow exceptions during dispose
+        }
     }
 
     public override int GetHashCode()
