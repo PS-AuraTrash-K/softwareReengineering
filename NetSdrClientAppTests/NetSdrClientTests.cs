@@ -86,6 +86,20 @@ public class NetSdrClientTests
         //No exception thrown
         _tcpMock.Verify(tcp => tcp.Disconnect(), Times.Once);
     }
+    
+    [Test]
+    public void TestEquals_ForUdpClientWrapper()
+    {
+        var udpClientWrapper1 = new UdpClientWrapper(1234);
+        var udpClientWrapper2 = new UdpClientWrapper(1234);
+        var udpClientWrapper3 = new UdpClientWrapper(5678);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(udpClientWrapper1.Equals(udpClientWrapper2), Is.True, "Wrappers with same port should be equal.");
+            Assert.That(udpClientWrapper1.Equals(udpClientWrapper3), Is.False, "Wrappers with different ports should not be equal.");
+        }
+    }
 
     [Test]
     public async Task DisconnectTest()
