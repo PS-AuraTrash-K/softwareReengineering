@@ -325,9 +325,6 @@ public class NetSdrClientTests
             Assert.That(messageReceivedCalled, Is.True);
             _udpClientWrapper.StopListening();
         }
-    
-
-        
 
         [Test]
         public void GetHashCode_ShouldReturnConsistentHashCode()
