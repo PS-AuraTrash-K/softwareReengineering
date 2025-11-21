@@ -251,7 +251,7 @@ namespace NetSdrClientAppTests
             ushort sampleSize = 8;
 
             Assert.Throws<ArgumentNullException>(() =>
-                NetSdrMessageHelper.GetSamples(sampleSize, null).ToArray());
+                NetSdrMessageHelper.GetSamples(sampleSize, null!).ToArray());
         }
 
         [Test]
