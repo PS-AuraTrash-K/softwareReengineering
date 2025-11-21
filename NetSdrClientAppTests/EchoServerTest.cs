@@ -61,12 +61,12 @@ public class EchoServerTest
         }
 
         [Test]
-        public void Server_ShouldHandleClientConnectionAndDisconnection()
+        public async Task Server_ShouldHandleClientConnectionAndDisconnection()
         {
             _ = Task.Run(() => _server.StartAsync());
 
             // Allow server to start
-            Thread.Sleep(1000);
+            await Task.Delay(1000);
 
             // Create a client
             var client = new TcpClient("127.0.0.1", 5000);
@@ -98,13 +98,13 @@ public class UdpTimedSenderTests
     }
 
     [Test]
-    public void UdpSender_ShouldStartSendingMessages()
+    public async Task UdpSender_ShouldStartSendingMessages()
     {
         // Start sending messages every 500ms
         _udpSender.StartSending(500);
 
-        // Let it send a few messages
-        Thread.Sleep(1500);
+        // Allow server to start
+        await Task.Delay(1000);
 
         // Stop the sending process
         _udpSender.StopSending();
