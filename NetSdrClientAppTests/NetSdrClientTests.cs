@@ -1,7 +1,9 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
 using Moq;
+using NetArchTest.Rules;
 using NetSdrClientApp;
 using NetSdrClientApp.Networking;
 
@@ -336,5 +338,37 @@ public class NetSdrClientTests
 
             // Act & Assert
             Assert.That(udpClientWrapper2.GetHashCode(), Is.EqualTo(udpClientWrapper1.GetHashCode()));
+        }
+        
+        [Test]
+        public void NetSdrClientApp_ShouldNotHaveDependency_On_EchoTspServer()
+        {
+            var uiAssembly = Assembly.Load("NetSdrClientApp");
+            var result = Types
+                .InAssembly(uiAssembly)
+                .That()
+                .ResideInNamespace("NetSdrClientApp")   // усі підпростори
+                .ShouldNot()
+                .HaveDependencyOn("EchoServer")       // або інше ім’я проекту/namespace
+                .GetResult();
+
+            Assert.That(result.IsSuccessful, Is.True, 
+                "Архітектурне правило порушено: NetSdrClientApp залежить від EchoServer");
+        }
+        
+        [Test]
+        public void EchoTspServer_ShouldNotHaveDependency_On_NetSdrClientApp()
+        {
+            var infraAssembly = Assembly.Load("EchoServer");
+            var result = Types
+                .InAssembly(infraAssembly)
+                .That()
+                .ResideInNamespace("EchoServer")
+                .ShouldNot()
+                .HaveDependencyOn("NetSdrClientApp")
+                .GetResult();
+
+            Assert.That(result.IsSuccessful, Is.True,
+                "Архітектурне правило порушено: EchoServer залежить від NetSdrClientApp");
         }
 }

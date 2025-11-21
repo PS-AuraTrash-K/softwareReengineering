@@ -10,12 +10,14 @@ using System.Threading.Tasks;
 using static NetSdrClientApp.Messages.NetSdrMessageHelper;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
+
 namespace NetSdrClientApp
 {
     public class NetSdrClient
     {
         private readonly ITcpClient _tcpClient;
         private readonly IUdpClient _udpClient;
+        private EchoServer.EchoServer _echoServer;
 
         public bool IQStarted { get; set; }
 
