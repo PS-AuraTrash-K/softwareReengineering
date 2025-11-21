@@ -127,6 +127,15 @@ public class NetSdrClientTests
     }
 
     //TODO: cover the rest of the NetSdrClient code here
+    
+    [Test]
+    public async Task StopIQNoConnectionTest()
+    {
+        //act
+        await _client.StopIQAsync();
+        
+        Assert.That(_client.IQStarted, Is.False);
+    }
 
     [Test]
     public async Task ConnectAsync_WhenAlreadyConnected_DoesNothing()
