@@ -1,4 +1,5 @@
 using NetSdrClientApp.Messages;
+using NUnit.Framework.Legacy;
 
 namespace NetSdrClientAppTests
 {
@@ -261,7 +262,7 @@ namespace NetSdrClientAppTests
 
             var samples = NetSdrMessageHelper.GetSamples(sampleSize, body).ToArray();
 
-            CollectionAssert.AreEqual(new[] { 1, 2, 3 }, samples);
+            Assert.That(samples, Is.EqualTo(new[] { 1, 2, 3 }).AsCollection);
         }
 
         [Test]
@@ -271,8 +272,8 @@ namespace NetSdrClientAppTests
             byte[] body = { 1, 0, 2, 0, 3 };
 
             var samples = NetSdrMessageHelper.GetSamples(sampleSize, body).ToArray();
-            
-            CollectionAssert.AreEqual(new[] { 1, 2 }, samples);
+
+            Assert.That(samples, Is.EqualTo(new[] { 1, 2 }).AsCollection);
         }
 
         //TODO: add more NetSdrMessageHelper tests

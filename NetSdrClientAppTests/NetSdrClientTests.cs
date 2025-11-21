@@ -322,7 +322,7 @@ public class NetSdrClientTests
             await Task.Delay(1000);
 
             // Assert
-            Assert.IsTrue(messageReceivedCalled);
+            Assert.That(messageReceivedCalled, Is.True);
             _udpClientWrapper.StopListening();
         }
     
