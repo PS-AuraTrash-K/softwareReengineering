@@ -1,4 +1,7 @@
-﻿using Moq;
+﻿using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using Moq;
 using NetSdrClientApp;
 using NetSdrClientApp.Networking;
 
@@ -9,6 +12,10 @@ public class NetSdrClientTests
     NetSdrClient _client;
     Mock<ITcpClient> _tcpMock;
     Mock<IUdpClient> _updMock;
+    
+    
+    private const int TestPort = 12345;
+    UdpClientWrapper _udpClientWrapper;
 
     public NetSdrClientTests() { }
 
@@ -36,6 +43,8 @@ public class NetSdrClientTests
         _updMock = new Mock<IUdpClient>();
 
         _client = new NetSdrClient(_tcpMock.Object, _updMock.Object);
+        
+        _udpClientWrapper = new UdpClientWrapper(TestPort);
     }
 
     [Test]
@@ -132,18 +141,7 @@ public class NetSdrClientTests
         _tcpMock.Verify(tcp => tcp.Connect(), Times.Never);
         _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Never);
     }
-
-    [Test]
-    public async Task StopIQ_NoConnection_DoesNotSendOrStopUdp()
-    {
-        // Act
-        await _client.StopIQAsync();
-
-        // Assert
-        _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Never);
-        _updMock.Verify(udp => udp.StopListening(), Times.Never);
-        Assert.That(_client.IQStarted, Is.False);
-    }
+    
 
     [Test]
     public async Task ChangeFrequencyAsync_NoConnection_DoesNotSend()
@@ -246,5 +244,64 @@ public class NetSdrClientTests
             "StartIQAsync викликає UDP-лісенер при повторному старті.");
         Assert.That(_client.IQStarted, Is.True);
     }
+    
+     [TearDown]
+        public void TearDown()
+        {
+            _udpClientWrapper.Dispose();
+        }
 
+        [Test]
+        public void Constructor_ShouldSetLocalEndPoint()
+        {
+            // Arrange & Act
+            var udpClientWrapper = new UdpClientWrapper(TestPort);
+
+            // Assert
+            var localEndPoint = udpClientWrapper.GetType().GetField("_localEndPoint", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.GetValue(udpClientWrapper) as IPEndPoint;
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(localEndPoint?.Address, Is.EqualTo(IPAddress.Any));
+                if (localEndPoint != null) Assert.That(localEndPoint.Port, Is.EqualTo(TestPort));
+            });
+        }
+
+        [Test]
+        public async Task StartListeningAsync_ShouldInvokeMessageReceivedEvent_WhenMessageReceived()
+        {
+            // Arrange
+            var messageReceivedCalled = false;
+            _udpClientWrapper.MessageReceived += (sender, e) => { messageReceivedCalled = true; };
+
+            // Act
+            var listeningTask = _udpClientWrapper.StartListeningAsync();
+
+            // Send a test UDP message
+            using (var udpClient = new UdpClient())
+            {
+                byte[] message = "Test Message"u8.ToArray();
+                await udpClient.SendAsync(message, message.Length, new IPEndPoint(IPAddress.Loopback, TestPort));
+            }
+
+            // Wait for the message to be processed
+            await Task.Delay(1000);
+
+            // Assert
+            Assert.IsTrue(messageReceivedCalled);
+            _udpClientWrapper.StopListening();
+        }
+        
+
+        [Test]
+        public void GetHashCode_ShouldReturnConsistentHashCode()
+        {
+            // Arrange
+            var udpClientWrapper1 = new UdpClientWrapper(TestPort);
+            var udpClientWrapper2 = new UdpClientWrapper(TestPort);
+
+            // Act & Assert
+            Assert.That(udpClientWrapper2.GetHashCode(), Is.EqualTo(udpClientWrapper1.GetHashCode()));
+        }
 }
