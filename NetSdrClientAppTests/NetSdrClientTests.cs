@@ -52,13 +52,14 @@ public class NetSdrClientTests
     }
 
     [Test]
-    public void TryConnect()
+    public void TryConnectWithoutServer()
     {
         _tcpClientWrapper.Connect();
+        Assert.That(_tcpClientWrapper.Connected, Is.False);
     }
     
     [Test]
-    public Task TryAsynk()
+    public void TryAsyncWithoutServer()
     {
         try
         {
@@ -66,9 +67,9 @@ public class NetSdrClientTests
         }
         catch (Exception e)
         {
-            return Task.CompletedTask;
+            Assert.Pass("No server found");
         }
-        return Task.CompletedTask;
+        Assert.That(_tcpClientWrapper.Connected, Is.True);
     }
 
     [Test]
