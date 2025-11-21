@@ -88,12 +88,16 @@ public class UdpClientWrapper : IUdpClient, IDisposable // <-- Implement IDispos
 
     public override int GetHashCode()
     {
-        var payload = $"{nameof(UdpClientWrapper)}|{_localEndPoint.Address}|{_localEndPoint.Port}";
+        var payload = $"{_localEndPoint.Address}|{_localEndPoint.Port}";
 
-        using var md5 = MD5.Create();
-        var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(payload));
+        var hashProvider = SHA512.Create();
 
-        return BitConverter.ToInt32(hash, 0);
+        using (hashProvider)
+        {
+            var hash = hashProvider.ComputeHash(Encoding.UTF8.GetBytes(payload));
+
+            return BitConverter.ToInt32(hash, 0);
+        }
     }
 
     public override bool Equals(object? obj)
