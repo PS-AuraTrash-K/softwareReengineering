@@ -50,6 +50,26 @@ public class NetSdrClientTests
     }
 
     [Test]
+    public void TryConnect()
+    {
+        _tcpClientWrapper.Connect();
+    }
+    
+    [Test]
+    public Task TryAsynk()
+    {
+        try
+        {
+            _tcpClientWrapper.SendMessageAsync("1");
+        }
+        catch (Exception e)
+        {
+            return Task.CompletedTask;
+        }
+        return Task.CompletedTask;
+    }
+
+    [Test]
     public async Task ConnectAsyncTest()
     {
         //act
