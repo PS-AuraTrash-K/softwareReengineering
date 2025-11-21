@@ -80,4 +80,14 @@ public class UdpClientWrapper : IUdpClient, IDisposable // <-- Implement IDispos
 
         return BitConverter.ToInt32(hash, 0);
     }
+
+    public override bool Equals(object? obj)
+    {
+        if (obj is UdpClientWrapper other)
+        {
+            return _localEndPoint.Equals(other._localEndPoint);
+        }
+
+        return false; 
+    }
 }
