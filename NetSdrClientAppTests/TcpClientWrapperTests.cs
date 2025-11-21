@@ -58,6 +58,14 @@ namespace NetSdrClientAppTests
             _client.Disconnect();
             Assert.That(_client.Connected, Is.False,  "Client should be disconnected.");
         }
+        
+        [Test]
+        public void TestDoubleConnect()
+        {
+            _client.Connect();
+            _client.Connect();
+            Assert.That(_client.Connected, Is.True, "Client should be connected.");
+        }
 
         [Test]
         public async Task TestSendMessageAsync_WithByteArray()
